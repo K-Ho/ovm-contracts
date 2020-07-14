@@ -16,9 +16,10 @@ contract ProxyFactory {
     function calculateCreateProxyWithNonceAddress(
         address _mastercopy,
         bytes calldata initializer,
-        uint256 saltNonce
+        uint256 saltNonce,
+        bytes calldata initcode
     ) external returns (Proxy proxy) {
-        proxy = deployProxyWithNonce(_mastercopy, initializer, saltNonce);
+        proxy = deployProxyWithNonce(_mastercopy, initializer, saltNonce, initcode);
         revert(string(abi.encodePacked(proxy)));
     }
 
@@ -61,9 +62,10 @@ contract ProxyFactory {
     function createProxyWithNonce(
         address _mastercopy,
         bytes memory initializer,
-        uint256 saltNonce
+        uint256 saltNonce,
+        bytes memory initcode
     ) public returns (Proxy proxy) {
-        proxy = deployProxyWithNonce(_mastercopy, initializer, saltNonce);
+        proxy = deployProxyWithNonce(_mastercopy, initializer, saltNonce, initcode);
         if (initializer.length > 0) {
             // solium-disable-next-line security/no-inline-assembly
             assembly {
@@ -94,7 +96,8 @@ contract ProxyFactory {
     function deployProxyWithNonce(
         address _mastercopy,
         bytes memory initializer,
-        uint256 saltNonce
+        uint256 saltNonce,
+        bytes memory initcode
     ) internal returns (Proxy proxy) {
         // If the initializer changes the proxy address should change too. Hashing the initializer data is cheaper than just concatinating it
         bytes32 salt = keccak256(
@@ -102,7 +105,7 @@ contract ProxyFactory {
         );
 
         bytes memory deploymentData = abi.encodePacked(
-            type(Proxy).creationCode,
+            initcode,
             uint256(_mastercopy)
         );
         // solium-disable-next-line security/no-inline-assembly
